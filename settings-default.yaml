@@ -1,0 +1,14 @@
+
+socket: "/tmp/pcc-gw.sock"
+
+mainAccount:
+  login: "..........@......com"
+  password: "....."
+
+subAccounts:
+  - login: ".........@........."
+    password: "....."
+  - login: "......."
+    password: "...."
+
+autoUpdate: 60
