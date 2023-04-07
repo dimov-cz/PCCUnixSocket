@@ -1,0 +1,6 @@
+[submodule "PccCommander"]
+	path = PccCommander
+	url = git@github.com:dimov-cz/PanasonicComfortCloudCommander.git
+[submodule "UnixSocketTool"]
+	path = UnixSocketTool
+	url = git@github.com:dimov-cz/PythonUnixSocketTool.git
