@@ -4,6 +4,7 @@ from UnixSocketTool import UnixSocketServer
 from PccCommander import PccCommander as PccCommanderDaemon
 import json
 from enum import Enum
+import threading
 
 settingsFile = 'settings.yaml'
 defaultSocketFile = '/tmp/pcc.sock'
@@ -26,8 +27,17 @@ print(f"Listening on {socketServer.socket_file}...")
 
 tokensPathPrefix = settings.get('tokensPathPrefix', defaultTokensPathPrefix)
 pcc = PccCommanderDaemon(settings.get('mainAccount.login'), settings.get('mainAccount.password'), tokensPathPrefix + 'main')
-for account in settings.get('subAccounts', []):
-    pcc.addSubAccount(account['login'], account['password'], tokensPathPrefix + account['login'])
+
+#registration of subaccounts is time consuming and it's not neccessary to be done immediately:
+def registerSubAccount():
+    for account in settings.get('subAccounts', []):
+        pcc.addSubAccount(account['login'], account['password'], tokensPathPrefix + account['login'])
+        
+if settings.get('delayedSubAccountsRegistration', False):
+    threading.Thread(target=registerSubAccount).start()
+else:
+    registerSubAccount()
+
 
 autoUpdateTime = settings.get('autoUpdate', 0)
 print(f"autoUpdateTime={autoUpdateTime}")
