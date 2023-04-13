@@ -1,6 +1,6 @@
 [submodule "PccCommander"]
-	path = PccCommander
+	path = eLGate/Controllers/DeviceControllers/PanasonicComfortCloudController/PccCommander
 	url = git@github.com:dimov-cz/PanasonicComfortCloudCommander.git
 [submodule "UnixSocketTool"]
-	path = UnixSocketTool
+	path = eLGate/Controllers/ManageControllers/UnixSocketController/UnixSocketTool
 	url = git@github.com:dimov-cz/PythonUnixSocketTool.git

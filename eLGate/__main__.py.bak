@@ -1,0 +1,181 @@
+import logging
+import sys
+import os
+
+#early logging setup:
+loggingHandler = logging.StreamHandler(sys.stdout)
+logging.basicConfig(
+    format='%(asctime)s - %(levelname)s@%(name)s - %(message)s', 
+    handlers=[loggingHandler]
+)
+if int(os.environ.get('DEBUG', '0')) > 0: #works as global filter for all loggers
+    loggingHandler.setLevel(logging.DEBUG)
+else:
+    loggingHandler.setLevel(logging.INFO)
+    
+if int(os.environ.get('DEBUG', '0')) == 3: #global logger level
+    logging.getLogger().setLevel(logging.DEBUG)
+
+from .__space__ import *
+
+import time
+import json
+import threading
+
+#hass_mqtt_device.logger.addHandler(loggingHandler)
+
+settingsFile = 'settings.yaml'
+defaultSocketFile = '/tmp/pcc.sock'
+defaultTokensPathPrefix = '~/pcc-'
+loopSleepTime = 0.1 #seconds
+
+class JSONInnerEncoder(json.JSONEncoder):
+    def default(self, obj):
+        if hasattr(obj.__class__, '__json__'):
+            return obj.__class__.__json__(obj)
+        return super().default(obj)        
+
+
+settings = Settings(settingsFile)
+
+socketServer = UnixSocketServer(settings.get('socket', defaultSocketFile))
+socketServer.open()
+logging.info(f"Listening on {socketServer.socket_file}...")
+
+mqttController = MQTTClientController(
+    settings.getString('mqtt.id', "PCCGateway"),
+    settings.getString('mqtt.login'),
+    settings.getString('mqtt.password')
+)
+mqttController.setLogLevel(logging.DEBUG)
+
+
+x = settings.getDict('presets', {})
+
+tokensPathPrefix = settings.getString('tokensPathPrefix', defaultTokensPathPrefix)
+pcc = PccCommanderDaemon(
+        settings.get('mainAccount.login'), 
+        settings.get('mainAccount.password'), 
+        tokensPathPrefix + 'main',
+        settings.getDict('presets', {}),
+        logging.DEBUG
+)
+
+#registration of subaccounts is time consuming and it's not neccessary to be done immediately:
+def registerSubAccount():
+    for account in settings.getList('subAccounts'):
+        pcc.addSubAccount(account['login'], account['password'], tokensPathPrefix + account['login'])
+        
+if settings.get('delayedSubAccountsRegistration', False):
+    threading.Thread(target=registerSubAccount).start()
+else:
+    registerSubAccount()
+
+gateway = Gateway(pcc)
+gateway.addController(mqttController)
+
+autoUpdateTime = settings.getInt('autoUpdate', 0)
+logging.info(f"autoUpdateTime={autoUpdateTime}")
+lastUpdate = 0
+
+gatewayId = settings.get('gatewayId', "PCCGateway")
+gatewayMainTopicName = settings.get('gatewayMainTopicName', "PCC_GW")
+dev1 = hass_mqtt_device.Device([gatewayId], gatewayMainTopicName, "v1.00", "XXX", "Panasonic")
+sens1 = None
+
+# accept incoming connections
+while True:
+    socketServer.serviceLoop()
+    
+
+    
+    # 1) read from clients
+    client, msg = socketServer.read()
+    while client is not None:
+        
+        try:
+            logging.debug(f"Received: {msg} from #{client.fileno()}")
+
+            tokens = msg.strip().split()
+            if (len(tokens) == 0):
+                raise Exception("Empty command.")
+
+            # Call the appropriate method on the device control object
+            if tokens[0] == "list":
+                pcc.requestReannounce()
+            elif tokens[0] == "status":
+                if len(tokens) == 1:
+                    pcc.requestStatusAll()
+                else:
+                    pcc.requestStatus(tokens[1])
+            elif tokens[0] == "setpower":
+                state = ACDeviceState()
+                state.power = tokens[2]
+                pcc.requestSetState(tokens[1], state)
+            elif tokens[0] in ["setpower", "setmode", "settemp"]:
+                pass
+            else:
+                raise Exception(f"Unknown command: {tokens[0]}")
+
+        except Exception as e:
+            logging.error(f"Error: {e}")
+            d = {
+                'commandId': 0,
+                'deviceId': None,
+                'type': 'error',
+                'data': str(e)
+            }
+            socketServer.writeAll(json.dumps(d, cls=JSONInnerEncoder) + "\n")
+        
+        #next:
+        client, msg = socketServer.read()
+        
+    # 2) auto update check
+    if autoUpdateTime > 0:
+        if time.time() - lastUpdate > autoUpdateTime:
+            lastUpdate = time.time()
+            pcc.requestStatusAll()
+
+
+    # 3) read from PCC
+    gateway.loopResponses()
+    response = pcc.getResponse()
+    while response is not None:
+        d = {
+            'commandId': response.commandId,
+            'deviceId': response.device.getDeviceInfo().deviceId if response.device is not None else None,
+            'type': response.type,
+            'data': response.data
+        }
+        socketServer.writeAll(json.dumps(d, cls=JSONInnerEncoder) + "\n")
+        
+        if response.type == 'status':
+            logging.info(f"status: {response}")
+            
+            #mqttGateway.reportStatus(response)
+            
+            #sens1._send_config()
+            if sens1 is None:
+                sens1 = hass_mqtt_device.Climate(
+                    client = mqttController.getClient(), 
+                    name="PCC Device XX",
+                    topic_parent_level="PCC_HASH", #opt, group, node_id
+                    object_id = "ac00", 
+                    parent_device=dev1,
+                    unit_of_measurement="°C",
+                    
+                    icon="mdi:thermometer",
+                )
+            
+            if not sens1 == None:
+                sens1.send(31.13)
+        
+        #next:
+        response = pcc.getResponse()
+        
+    loggingHandler.flush()
+    time.sleep(loopSleepTime)
+
+mqttController.stop()
+conn.close()
+

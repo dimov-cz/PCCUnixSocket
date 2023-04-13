@@ -1,0 +1,3 @@
+[submodule "pccLocal"]
+	path = pccLocal
+	url = git@github.com:dimov-cz/python-panasonic-comfort-cloud.git
