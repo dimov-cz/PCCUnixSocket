@@ -1,14 +1,35 @@
-
-socket: "/tmp/pcc-gw.sock"
-
-mainAccount:
-  login: "..........@......com"
-  password: "....."
-
-subAccounts:
-  - login: ".........@........."
-    password: "....."
-  - login: "......."
-    password: "...."
-
 autoUpdate: 60
+socket: "/run/eLGate.sock"
+
+mqtt:
+  host: "localhost"
+  login: "<mqtt-login>"
+  password: "<mqtt-pass>"
+
+pcc:
+  presets:
+    "Off":
+      mode: Off
+    "Quiet":
+      mode: Cool
+      eco: Quiet
+      fanSpeed: Low
+      airSwingHorizontal: Auto
+      airSwingVertical: Up
+    "Power":
+      mode: Cool
+      eco: Powerful
+      fanSpeed: Auto
+      airSwingHorizontal: Auto
+      airSwingVertical: Up
+    "Max":
+      mode: Cool
+      eco: Powerful
+      fanSpeed: High
+      airSwingHorizontal: Auto
+      airSwingVertical: Auto
+  accounts:
+    - login: "<email1>"
+      password: "<pass1>"
+    - login: "<email2>"
+      password: "<pass2>"
