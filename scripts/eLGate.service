@@ -1,0 +1,11 @@
+[Unit]
+Description=eLGate
+
+[Service]
+ExecStart=/usr/bin/python3 <<<PYSCRIPT_PATH>>>
+Restart=always
+User=<<<USER>>>
+Environment=PYTHONUNBUFFERED=1
+
+[Install]
+WantedBy=multi-user.target

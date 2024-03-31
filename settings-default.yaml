@@ -11,6 +11,4 @@ subAccounts:
   - login: "......."
     password: "...."
 
-delayedSubAccountsRegistration: False
-
 autoUpdate: 60

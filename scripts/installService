@@ -1,0 +1,18 @@
+#!/bin/bash
+
+SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd ) #"
+
+cd $SCRIPT_DIR
+
+IN="eLGate.service"
+OUT="/etc/systemd/system/$IN"
+EXEC=$(realpath "$SCRIPT_DIR/../eLGate.py")
+USER="root" #change
+
+echo $EXEC
+
+cat $IN | sed "s|<<<PYSCRIPT_PATH>>>|$EXEC|" | sed "s/<<<USER>>>/$USER/" > $OUT
+
+systemctl daemon-reload
+systemctl start $IN
+systemctl enable $IN

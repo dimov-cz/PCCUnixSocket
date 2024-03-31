@@ -1,4 +1,20 @@
 from ...__space__ import *
 
 class AManageController(AController):
-    pass
+    
+    __commands: List[ACommand] = []
+    
+    def sendCommand(self, command:ACommand) -> None:
+        self.__commands.append(command)
+        
+    def popCommand(self) -> Optional[ACommand]:
+        if len(self.__commands) == 0:
+            return None
+        return self.__commands.pop(0)
+    
+    @abstractmethod
+    def processNewDevice(self, message: NewDeviceMessage):
+        pass
+    
+    def processClimateState(self, message: ClimateStateMessage):
+        pass

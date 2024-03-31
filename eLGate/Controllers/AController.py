@@ -1,20 +1,15 @@
 from ..__space__ import *
 
 
-class AController(ABC):
+class AController(ALoggable, ABC):
     
-    logger: logging.Logger
-    
-    def __init__(self) -> None:
-        self.initLogger()
-        
-    def initLogger(self):
-        self.logger = logging.getLogger(self.__class__.__name__)
-        self.setLogLevel(logging.INFO)
-        
-    def setLogLevel(self, level):
-        self.logger.setLevel(level)
-    
+
+    # use to quit all activity befeore exit, especially threads
     @abstractmethod
-    def processAnnouncement(self, device: ACDevice):
+    def stop(self):
         pass
+
+    @abstractmethod
+    def loop(self):
+        pass
+    

@@ -1,11 +1,19 @@
+from typing import Optional
 import yaml
 import os
 import logging
 
 class Settings:
     data = None
-    def __init__(self, yamlFile):
-        self.data = self.loadSettings(yamlFile)
+    def __init__(self, yamlFile: Optional[str] = None, data = None):
+        if yamlFile is None and data is None:
+            raise Exception("Either yamlFile or data must be set!")
+        if yamlFile is not None and data is not None:
+            raise Exception("Either yamlFile or data must be set, not both!")   
+        if yamlFile is not None:
+            self.data = self.loadSettings(yamlFile)
+        else:
+            self.data = data
         
     def loadSettings(self, settingsFile):
         pass
@@ -65,6 +73,10 @@ class Settings:
         return value
     
     def getDict(self, key, default = {}) -> dict:
+        value = self.get(key, default)
+        if (not isinstance(value, dict)):
+            raise Exception(f"Value for {key} is not a dictionary! It's a {type(value)}")
+        return value
         result = {}
         for item in self.getList(key, []):
             result.update(item)

@@ -11,12 +11,6 @@ import hashlib
 from . import urls
 from . import constants
 
-#import urllib3.util.connection as urllib3_conn
-#urllib3_conn.DEFAULT_MAX_POOL_SIZE = 30
-#urllib3.poolmanager.PoolManager.DEFAULT_POOL_SIZE = 30
-requestsPool = urllib3.PoolManager(num_pools=10, maxsize=30)
-
-
 def _validate_response(response):
     """ Verify that response is OK """
     if response.status_code == 200:
@@ -57,7 +51,6 @@ class Session(object):
         password (str): Password used to login to verisure app
 
     """
-    requestsSession: requests.Session = None
 
     def __init__(self, username, password, tokenFileName='~/.panasonic-token', raw=False, verifySsl=True):
         self._username = username
@@ -82,14 +75,6 @@ class Session(object):
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         self.logout()
-        
-    def __getRequestsSession(self) -> requests.Session:
-        if self.requestsSession is None:
-            self.requestsSession = requests.Session()
-            adapter = requests.adapters.HTTPAdapter(pool_connections=30, pool_maxsize=30)
-            self.requestsSession.mount('https://', adapter)
-            self.requestsSession.keep_alive = True
-        return self.requestsSession
 
     def login(self):
         """ Login to verisure app api """
@@ -125,6 +110,9 @@ class Session(object):
             "X-APP-TYPE": "1",
             "X-APP-VERSION": "1.19.0",
             "X-User-Authorization": self._vid,
+            "X-APP-TIMESTAMP": "1",
+            "X-APP-NAME": "Comfort Cloud",
+            "X-CFC-API-KEY": "Comfort Cloud",
             "User-Agent": "G-RAC",
             "Accept": "application/json; charset=utf-8",
             "Content-Type": "application/json; charset=utf-8"
@@ -142,7 +130,7 @@ class Session(object):
         if self._raw: print("--- creating token by authenticating")
 
         try:
-            response = self.__getRequestsSession().post(urls.login(), json=payload, headers=self._headers(), verify=self._verifySsl)
+            response = requests.post(urls.login(), json=payload, headers=self._headers(), verify=self._verifySsl)
             if 2 != response.status_code // 100:
                 raise ResponseError(response.status_code, response.text)
 
@@ -163,7 +151,7 @@ class Session(object):
         response = None
 
         try:
-            response = self.__getRequestsSession().get(urls.get_groups(),headers=self._headers(), verify=self._verifySsl)
+            response = requests.get(urls.get_groups(),headers=self._headers(), verify=self._verifySsl)
 
             if 2 != response.status_code // 100:
                 raise ResponseError(response.status_code, response.text)
@@ -220,7 +208,7 @@ class Session(object):
             response = None
 
             try:
-                response = self.__getRequestsSession().get(urls.status(deviceGuid), headers=self._headers(), verify=self._verifySsl)
+                response = requests.get(urls.status(deviceGuid), headers=self._headers(), verify=self._verifySsl)
 
                 if 2 != response.status_code // 100:
                     raise ResponseError(response.status_code, response.text)
@@ -252,7 +240,7 @@ class Session(object):
             }
 
             try:
-                response = self.__getRequestsSession().post(urls.history(), json=payload, headers=self._headers(), verify=self._verifySsl)
+                response = requests.post(urls.history(), json=payload, headers=self._headers(), verify=self._verifySsl)
 
                 if 2 != response.status_code // 100:
                     raise ResponseError(response.status_code, response.text)
@@ -283,7 +271,7 @@ class Session(object):
             response = None
 
             try:
-                response = self.__getRequestsSession().get(urls.status(deviceGuid), headers=self._headers(), verify=self._verifySsl)
+                response = requests.get(urls.status(deviceGuid), headers=self._headers(), verify=self._verifySsl)
 
                 if 2 != response.status_code // 100:
                     raise ResponseError(response.status_code, response.text)
@@ -398,7 +386,7 @@ class Session(object):
                 print("--- raw out ending    ---")
 
             try:
-                response = self.__getRequestsSession().post(urls.control(), json=payload, headers=self._headers(), verify=self._verifySsl)
+                response = requests.post(urls.control(), json=payload, headers=self._headers(), verify=self._verifySsl)
 
                 if 2 != response.status_code // 100:
                     raise ResponseError(response.status_code, response.text)

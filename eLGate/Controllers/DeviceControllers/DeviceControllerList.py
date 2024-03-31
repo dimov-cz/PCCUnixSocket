@@ -1,4 +1,6 @@
 from ...__space__ import *
 
-class DeviceControllerList(list):
+from typing import List
+
+class DeviceControllerList(List[ADeviceController]):
     pass
