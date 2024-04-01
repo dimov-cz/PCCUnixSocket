@@ -4,3 +4,7 @@
 [submodule "UnixSocketTool"]
 	path = eLGate/Controllers/ManageControllers/UnixSocketController/UnixSocketTool
 	url = git@github.com:dimov-cz/PythonUnixSocketTool.git
+[submodule "hass-mqtt-discovery"]
+	path = eLGate/Controllers/ManageControllers/MQTTController/hass-mqtt-discovery
+	url = git@github.com:dimov-cz/hass-mqtt-discovery.git
+	branch = main
