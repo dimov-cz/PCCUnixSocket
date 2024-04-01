@@ -1,0 +1,7 @@
+#!/bin/bash
+
+IN="eLGate.service"
+
+systemctl disable $IN
+systemctl stop $IN
+
