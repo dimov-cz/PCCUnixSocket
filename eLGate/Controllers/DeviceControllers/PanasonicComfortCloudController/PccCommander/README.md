@@ -1,2 +1,0 @@
-# PanasonicComfortCloudCommander
-Wrapper of pcomfortcloud

@@ -1,10 +1,12 @@
-[submodule "PccCommander"]
-	path = eLGate/Controllers/DeviceControllers/PanasonicComfortCloudController/PccCommander
-	url = git@github.com:dimov-cz/PanasonicComfortCloudCommander.git
-[submodule "UnixSocketTool"]
-	path = eLGate/Controllers/ManageControllers/UnixSocketController/UnixSocketTool
-	url = git@github.com:dimov-cz/PythonUnixSocketTool.git
 [submodule "hass-mqtt-discovery"]
 	path = eLGate/Controllers/ManageControllers/MQTTController/hass-mqtt-discovery
 	url = git@github.com:dimov-cz/hass-mqtt-discovery.git
+	branch = main
+[submodule "eLGate/Controllers/DeviceControllers/PanasonicComfortCloudController/PccCommander"]
+	path = eLGate/Controllers/DeviceControllers/PanasonicComfortCloudController/PccCommander
+	url = git@github.com:dimov-cz/PanasonicComfortCloudCommander.git
+	branch = main
+[submodule "eLGate/Controllers/ManageControllers/UnixSocketController/UnixSocketTool"]
+	path = eLGate/Controllers/ManageControllers/UnixSocketController/UnixSocketTool
+	url = git@github.com:dimov-cz/PythonUnixSocketTool.git
 	branch = main
