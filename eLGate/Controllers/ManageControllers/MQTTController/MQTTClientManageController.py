@@ -1,5 +1,8 @@
-from typing import Dict
+from typing import Dict, Self
+
 import json
+
+from eLGate.__space__ import Settings
 from .__space__ import *
 
 from .hass_mqtt_discovery.hass_mqtt_device import Climate as HassClimate
@@ -25,6 +28,15 @@ class MQTTClientManageController(AManageController):
                             subscribeTopics= [ "homeassistant/#"]
         )
         self.mqttConnector.start()
+
+    def factoryBuild(settings: Settings) -> Self:
+        return MQTTClientManageController(
+            hostname=settings.getString('host', 'localhost'),
+            port    =settings.getInt(   'port', 1883),
+            clientId=settings.getString('id',   "eLGate"),
+            username=settings.getString('login', ''),
+            password=settings.getString('password', '')
+        )
                 
     def stop(self):
         self.mqttConnector.stop()

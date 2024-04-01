@@ -1,5 +1,7 @@
+from eLGate.__space__ import Settings
 from ....__space__ import *
 import time
+from typing import Self
 
 from .PccCommander.PccCommander import PccCommander as PccCommander
 from .PccCommander.Response import Response as PccResponse
@@ -30,6 +32,11 @@ class PanasonicComfortCloudDeviceController(ADeviceController):
                 password  = account['password'],
                 tokenPath = tokenPath + account['login']
             )
+    
+    def factoryBuild(settings: Settings) -> Self:
+        return PanasonicComfortCloudDeviceController(
+            settings = settings
+        )
 
     def setLogLevel(self, level):
         if (self.pcc):

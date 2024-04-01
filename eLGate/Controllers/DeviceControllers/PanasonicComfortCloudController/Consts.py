@@ -3,7 +3,7 @@ from typing import Optional, List, Dict
 from .PccCommander.ACDeviceStateValue import ACDeviceStateValue as PccDeviceStateValue
 from .PccCommander.ACDeviceState import ACDeviceState as PccDeviceState
 
-from pcomfortcloud import constants as PccConsts
+from .PccCommander.pccLocal.pcomfortcloud import constants as PccConsts
 
 class PccConstToElGateMapper:
     @staticmethod

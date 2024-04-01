@@ -63,30 +63,27 @@ def main():
     print("main")
 
     settingsFile = 'settings.yaml'
-    defaultSocketFile = '/tmp/pcc.sock'
-    defaultTokensPathPrefix = '~/pcc-'
     loopSleepTime = 1 #seconds
 
     settings = Settings(settingsFile)
-
-    from .Controllers.ManageControllers.MQTTController.MQTTClientManageController import MQTTClientManageController
-    mqttController = MQTTClientManageController(
-        hostname=settings.getString('mqtt.host', 'localhost'),
-        port    =settings.getInt(   'mqtt.port', 1883),
-        clientId=settings.getString('mqtt.id',   "eLGate"),
-        username=settings.getString('mqtt.login'),
-        password=settings.getString('mqtt.password')
-    )
-    
-    from .Controllers.DeviceControllers.PanasonicComfortCloudController.PanasonicComfortCloudDeviceController import PanasonicComfortCloudDeviceController
-    pccController = PanasonicComfortCloudDeviceController(Settings(data = settings.get('pcc')))
-
-    sc = SignalCatcher()
-
     gateway = Gateway()
-    gateway.addManageController(mqttController)
-    gateway.addDeviceController(pccController)
+
+    #region convert config to controllers
+    mqttSettings = settings.get('mqtt')
+    if mqttSettings is not None:
+        from .Controllers.ManageControllers.MQTTController.MQTTClientManageController import MQTTClientManageController
+        mqttController = MQTTClientManageController.factoryBuild(Settings(data = mqttSettings))
+        gateway.addManageController(mqttController)
     
+    pccSettings = settings.get('pcc')
+    if pccSettings is not None:
+        from .Controllers.DeviceControllers.PanasonicComfortCloudController.PanasonicComfortCloudDeviceController import PanasonicComfortCloudDeviceController
+        pccController = PanasonicComfortCloudDeviceController.factoryBuild(Settings(data = pccSettings))
+        gateway.addDeviceController(pccController)
+    #endregion
+
+
+    sc = SignalCatcher()    
     # accept incoming connections
     exiting = False
     while sc.noSignalReceived() and not exiting:
@@ -104,6 +101,5 @@ def main():
             
 
     logging.info("Exiting...")
-    mqttController.stop()
-    pccController.stop()
+    gateway.stop()
     logging.info("Exiting... done")

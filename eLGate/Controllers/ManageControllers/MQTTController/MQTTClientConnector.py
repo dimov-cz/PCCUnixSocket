@@ -23,7 +23,7 @@ class MQTTClientConnector(Thread, ALoggable):
     def __init__(self, **kwargs) -> None:
         ALoggable.__init__(self)
         Thread.__init__(self, kwargs=kwargs)
-    
+
     def setUp(self, 
               clientId: str, 
               hostname: str = "localhost", 
@@ -41,7 +41,7 @@ class MQTTClientConnector(Thread, ALoggable):
         self.subscribeTopics = subscribeTopics
         self.messageCallback = messageCallback
         
-        self.mqtt_client = mqtt.Client(self.clientId)
+        self.mqtt_client = mqtt.Client(mqtt.CallbackAPIVersion.VERSION1, self.clientId)
         self.mqtt_client.on_connect = self._on_connect
         self.mqtt_client.on_message = self._on_message
         

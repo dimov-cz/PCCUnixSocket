@@ -15,6 +15,13 @@ class AManageController(AController):
     @abstractmethod
     def processNewDevice(self, message: NewDeviceMessage):
         pass
+
+    @abstractmethod
+    def stop(self):
+        return super().stop()
     
+    # optional
     def processClimateState(self, message: ClimateStateMessage):
         pass
+
+    

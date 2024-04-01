@@ -17,6 +17,9 @@ class Gateway(ALoggable):
 
     def loop(self):
         
+        if len(self.deviceControllers) == 0:
+            self._logger.warning("No device controller added, u are missing settings or the point")
+
         for controller in self.deviceControllers:
             controller.loop()
             for message in iter(controller.popMessage, None):
@@ -29,6 +32,8 @@ class Gateway(ALoggable):
                     else:
                         self._logger.error(f"Unknown message type: {message}")
                     
+        if len(self.manageControllers) == 0:
+            self._logger.warning("No manage controller added, u are missing settings or the point")
             
         for controller in self.manageControllers:
             controller.loop()
@@ -39,3 +44,8 @@ class Gateway(ALoggable):
                         deviceController.processClimateCommand(command)
                     else:
                         self._logger.error(f"Unknown command type: {command}")
+    def stop(self):
+        for controller in self.deviceControllers:
+            controller.stop()
+        for controller in self.manageControllers:
+            controller.stop()
