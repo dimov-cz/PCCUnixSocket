@@ -10,3 +10,7 @@
 	path = eLGate/Controllers/ManageControllers/UnixSocketController/UnixSocketTool
 	url = git@github.com:dimov-cz/PythonUnixSocketTool.git
 	branch = main
+[submodule "eLGate/Controllers/DeviceControllers/EpsonProjController/epLocal"]
+	path = eLGate/Controllers/DeviceControllers/EpsonProjController/epLocal
+	#url = https://github.com/pszafer/epson_projector.git
+	url = https://github.com/dimov-cz/epson_projector.git
