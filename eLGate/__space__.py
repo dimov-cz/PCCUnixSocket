@@ -16,15 +16,19 @@ from .Devices.BinarySensorDevice import BinarySensorDevice
 from .Devices.SensorDevice import SensorDevice
 from .Devices.SwitchDevice import SwitchDevice
 from .Devices.HvacDevice import HvacDevice
+from .Devices.ProjectorDevice import ProjectorDevice
 
 #messages:
 from .Messages.AMessage import AMessage
 from .Messages.NewDeviceMessage import NewDeviceMessage
 from .Messages.ClimateStateMessage import ClimateStateMessage
+from .Messages.ProjectorStateMessage import ProjectorStateMessage
 
 #commands:
 from .Commands.ACommand import ACommand
+from .Commands.SwitchCommand import SwitchCommand
 from .Commands.ClimateCommand import ClimateCommand
+from .Commands.ProjectorCommand import ProjectorCommand
 
 #controllers:
 from .Controllers.AController import AController

@@ -7,7 +7,7 @@ class Gateway(ALoggable):
     controlers = []
     
     def __init__(self) -> None:
-        ALoggable.__init__(self)
+        super().__init__()
         
     def addDeviceController(self, controller: ADeviceController):
         self.deviceControllers.append(controller)
@@ -29,6 +29,8 @@ class Gateway(ALoggable):
                         manageController.processNewDevice(message)
                     elif isinstance(message, ClimateStateMessage):
                         manageController.processClimateState(message)
+                    elif isinstance(message, ProjectorStateMessage):
+                        manageController.processProjectorState(message)
                     else:
                         self._logger.error(f"Unknown message type: {message}")
                     
@@ -42,6 +44,8 @@ class Gateway(ALoggable):
                 for deviceController in self.deviceControllers:
                     if isinstance(command, ClimateCommand):
                         deviceController.processClimateCommand(command)
+                    elif isinstance(command, ProjectorCommand):
+                        deviceController.processProjectorCommand(command)
                     else:
                         self._logger.error(f"Unknown command type: {command}")
     def stop(self):

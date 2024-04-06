@@ -80,6 +80,12 @@ def main():
         from .Controllers.DeviceControllers.PanasonicComfortCloudController.PanasonicComfortCloudDeviceController import PanasonicComfortCloudDeviceController
         pccController = PanasonicComfortCloudDeviceController.factoryBuild(Settings(data = pccSettings))
         gateway.addDeviceController(pccController)
+
+    epsonProjSettings = settings.get('epsonProj')
+    if epsonProjSettings is not None:
+        from .Controllers.DeviceControllers.EpsonProjController.EpsonProjController import EpsonProjController
+        epsonProjController = EpsonProjController.factoryBuild(Settings(data = epsonProjSettings))
+        gateway.addDeviceController(epsonProjController)
     #endregion
 
 

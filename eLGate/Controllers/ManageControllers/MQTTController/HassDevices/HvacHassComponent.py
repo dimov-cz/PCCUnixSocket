@@ -16,6 +16,7 @@ class HvacHassComponent(AHassComponent):
         parentHassDevice: HassDevice,
         dataMainTopic: str = "homeassistant",
         discoveryMainTopic: str = "homeassistant",
+        deviceId: Optional[str] = None
     ) -> None:
         super().__init__(device, parentHassDevice, dataMainTopic, discoveryMainTopic)    
         
@@ -42,14 +43,14 @@ class HvacHassComponent(AHassComponent):
             presetsIds.remove("none") #not allowed in HASS
         config = {
             "~": baseTopic,
-            "name": self.device.name,
+            "name": self.componentName,
             #"state_topic": "~/state",
             #"unit_of_measurement": self.unit_of_measurement, #NI in DCZ?
             
             "device": self.parentHassDevice.getConfig(),         
             "force_update": True,
 
-            "unique_id": self.parentHassDevice.identifiers[0] + "_" + self.device.getShortId(),
+            "unique_id": self.getUniqueId(),
             "device_class": "hvac", # illuminance / *humidity*
             "stat_t": "~/state",
             

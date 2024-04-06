@@ -10,12 +10,14 @@ from .hass_mqtt_discovery.hass_mqtt_device import Device as HassDevice2
 
 class MQTTClientManageController(AManageController):
     mqttConnector: MQTTClientConnector
-    _gateDevice: Optional[HassDevice] = None
-    activeComponents: Dict[str, AHassComponent] = {}
+    _gateDevice: Optional[HassDevice]
+    activeComponents: Dict[str, Dict[str, AHassComponent]]
     
     
     def __init__(self, clientId: str, hostname: str = "localhost", port: int = 1883, username: str = "", password: str = ""):
         super().__init__()
+        self._gateDevice = None
+        self.activeComponents = {}
         
         self.mqttConnector = MQTTClientConnector()
         self.mqttConnector.setUp(
@@ -43,18 +45,25 @@ class MQTTClientManageController(AManageController):
         self.mqttConnector.join()
         
     def _on_message(self, client, userdata, msg):
-        for component in self.activeComponents.values():
-            #if commandTopic is the current topic (from first char)
-            cmdTopic = component.getCommandTopic()
-            if cmdTopic == msg.topic[:len(cmdTopic)]:
-                subtopic = msg.topic[len(cmdTopic)+1:]
-                self._logger.debug(f"Processing message for {component} -- {subtopic} -- {msg.payload}")
-                try:
-                    command = component.processCommandMessage(subtopic, msg.payload)
-                    self.sendCommand(command)
-                except Exception as e:
-                    self._logger.error(f"Error processing command message: {e}")
-                return
+        for componentsList in self.activeComponents.values():
+            for cKey, component in componentsList.items():
+                #if commandTopic is the current topic (from first char)
+                cmdTopic = component.getCommandTopic()
+                if cmdTopic == msg.topic[:len(cmdTopic)]:
+                    subtopic = msg.topic[len(cmdTopic)+1:]
+                    self._logger.debug(f"Processing message for {component} -- {subtopic} -- {msg.payload}")
+                    try:
+                        if isinstance(component.device, ProjectorDevice):
+                            command = ProjectorCommand(component.device)
+                            if cKey == "main": command.power = component.processCommandMessage(subtopic, msg.payload).state
+                            elif cKey == "src": command.source = msg.payload.decode("utf-8")
+                            elif cKey == "colormode": command.colorMode = msg.payload.decode('utf-8')
+                        else:
+                            command = component.processCommandMessage(subtopic, msg.payload)
+                        self.sendCommand(command)
+                    except Exception as e:
+                        self._logger.error(f"Error processing command message: {e}")
+                    return
         self._logger.warning(f"Message for unknown topic: {msg}")
         
     def loop(self):
@@ -88,7 +97,43 @@ class MQTTClientManageController(AManageController):
                                     device=message.device, 
                                     parentHassDevice=self.meAsDevice()
                 )
-                self.activeComponents[deviceId] = newComponent
+                self.activeComponents[deviceId] = {}
+                self.activeComponents[deviceId]["main"] = newComponent
+                self._sendConfig(newComponent)
+                self.mqttConnector.getClient().subscribe(newComponent.getCommandTopic()+'/#')
+
+            elif isinstance(message.device, ProjectorDevice):
+                self._logger.info(f"Processing new projector: {message.device}")
+                self.activeComponents[deviceId] = {}
+                newComponent = SwitchHassComponent(
+                                    device=message.device,
+                                    parentHassDevice=self.meAsDevice(),
+                                    componentUniqueId= message.device.getShortId() + "_PWR",
+                                    componentName= message.device.name + " Power"
+                )
+                self.activeComponents[deviceId]["main"] = newComponent
+                self._sendConfig(newComponent)
+                self.mqttConnector.getClient().subscribe(newComponent.getCommandTopic()+'/#')
+
+                newComponent = SelectHassComponent(
+                                    device=message.device,
+                                    parentHassDevice=self.meAsDevice(),
+                                    componentUniqueId=message.device.getShortId() + "_SRC",
+                                    componentName=message.device.name + " Source",
+                                    selectOptions=message.device.sourcesList
+                )
+                self.activeComponents[deviceId]["src"] = newComponent
+                self._sendConfig(newComponent)
+                self.mqttConnector.getClient().subscribe(newComponent.getCommandTopic()+'/#')
+
+                newComponent = SelectHassComponent(
+                                    device=message.device,
+                                    parentHassDevice=self.meAsDevice(),
+                                    componentUniqueId=message.device.getShortId() + "_MODE",
+                                    componentName=message.device.name + " Mode",
+                                    selectOptions=message.device.colorModesList
+                )
+                self.activeComponents[deviceId]["colormode"] = newComponent
                 self._sendConfig(newComponent)
                 self.mqttConnector.getClient().subscribe(newComponent.getCommandTopic()+'/#')
             else:
@@ -99,14 +144,34 @@ class MQTTClientManageController(AManageController):
         if message.deviceId not in self.activeComponents:
             self._logger.error(f"Device not found: {message.deviceId}")
             return
-        device = self.activeComponents[message.deviceId]
-        if not isinstance(device, HvacHassComponent):
+        hassComponent = self.activeComponents[message.deviceId]["main"]
+        if not isinstance(hassComponent, HvacHassComponent):
             self._logger.error(f"Device is not a climate device: {message.deviceId}")
             return
         
-        if message.available is not None: self._sendData(device.getUpdateAvailabilityTD(message.available))
-        if message.mode is not None:    self._sendData(device.getUpdateModeTD(message.mode))
-        if message.presetId is not None: self._sendData(device.getUpdatePresetTD(message.presetId))
-        if message.targetTemperature is not None: self._sendData(device.getUpdateTargetTemperatureTD(message.targetTemperature))
-        if message.currentTemperatureIn is not None: self._sendData(device.getUpdateInsideTemperatureTD(message.currentTemperatureIn))
-        if message.currentTemperatureOut is not None: self._sendData(device.getUpdateOutsideTemperatureTD(message.currentTemperatureOut))
+        if message.available is not None: self._sendData(hassComponent.getUpdateAvailabilityTD(message.available))
+        if message.mode is not None:    self._sendData(hassComponent.getUpdateModeTD(message.mode))
+        if message.presetId is not None: self._sendData(hassComponent.getUpdatePresetTD(message.presetId))
+        if message.targetTemperature is not None: self._sendData(hassComponent.getUpdateTargetTemperatureTD(message.targetTemperature))
+        if message.currentTemperatureIn is not None: self._sendData(hassComponent.getUpdateInsideTemperatureTD(message.currentTemperatureIn))
+        if message.currentTemperatureOut is not None: self._sendData(hassComponent.getUpdateOutsideTemperatureTD(message.currentTemperatureOut))
+
+    def processProjectorState(self, message: ProjectorStateMessage):
+        self._logger.info(f"Processing projector state: {message}")
+        if message.deviceId not in self.activeComponents:
+            self._logger.error(f"Device not found: {message.deviceId}")
+            return
+        powerComp = self.activeComponents[message.deviceId]["main"]
+        
+        if message.power is not None:
+            self._sendData(powerComp.getSetStateTD(message.power))
+
+        if message.source is not None:
+            sourceComp = self.activeComponents[message.deviceId]["src"]
+            self._sendData(sourceComp.getSetStateTD(message.source))
+        
+        if message.colorMode is not None:
+            colorModeComp = self.activeComponents[message.deviceId]["colormode"]
+            self._sendData(colorModeComp.getSetStateTD(message.colorMode))
+
+        

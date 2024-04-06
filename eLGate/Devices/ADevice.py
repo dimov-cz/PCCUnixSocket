@@ -1,3 +1,4 @@
+from hashlib import md5
 from ..__space__ import *
 
 class ADevice(ALoggable, ABC):
@@ -17,7 +18,8 @@ class ADevice(ALoggable, ABC):
         self.model = model
         self.manufacturer = manufacturer
         
-    #for usage by system wich don't support long device ids
+    #for usage by system wich don't support long device ids,
+    #we need ensure is 16 chars max
     def getShortId(self):
         if self._shortId is None:
             self._shortId = self.__calcDeviceId(self.id)
@@ -26,12 +28,23 @@ class ADevice(ALoggable, ABC):
     def __str__(self) -> str:
         return "ADevice(" + self.id + ", " + self.name + ", " + self.model + ", " + self.manufacturer + ")"
     
-    #creates shorter hash from pcc guid to use as deviceId
+    #creates shorter hash
     #this helps integrate with other systems
     @staticmethod
-    def __calcDeviceId(long_hash):
+    def __calcDeviceId(long_id: str) -> str:
+        if len(long_id)<=16:
+            return long_id
+        
         # Convert hex to bytes
-        hash_bytes = bytes.fromhex(long_hash)
+        hash_bytes = None
+        try:
+            if len(long_id) == 32:
+                hash_bytes = bytes.fromhex(long_id)
+        except ValueError:
+            pass
+
+        if hash_bytes is None:
+            hash_bytes = md5(long_id.encode('utf-8')).digest() #return 16 bytes
 
         # Sum first 8 bytes XOR last 8 bytes
         sum_bytes = hash_bytes[:8] + hash_bytes[-8:]

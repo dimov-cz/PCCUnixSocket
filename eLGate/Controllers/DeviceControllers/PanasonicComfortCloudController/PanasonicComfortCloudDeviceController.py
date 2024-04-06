@@ -12,9 +12,9 @@ from .PccCommander.ACDeviceStateValue import ACDeviceStateValue as PccDeviceStat
 from .Consts import PccConstToElGateMapper, ELGateToPccConstMapper
 
 class PanasonicComfortCloudDeviceController(ADeviceController):
-    pcc: Optional[PccCommander] = None
-    autoUpdateTime: float = 60
-    lastUpdateStart: float = 0
+    pcc: Optional[PccCommander]
+    autoUpdateTime: float
+    lastUpdateStart: float
     
     def __init__(self, settings: Settings) -> None:
         super().__init__()
@@ -32,6 +32,9 @@ class PanasonicComfortCloudDeviceController(ADeviceController):
                 password  = account['password'],
                 tokenPath = tokenPath + account['login']
             )
+
+        self.autoUpdateTime = 60
+        self.lastUpdateStart = 0
     
     def factoryBuild(settings: Settings) -> Self:
         return PanasonicComfortCloudDeviceController(

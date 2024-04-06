@@ -12,5 +12,10 @@ class ADeviceController(AController):
             return None
         return self.__messages.pop(0)
     
+    # @optional
     def processClimateCommand(self, command: ClimateCommand):
+        pass
+
+    # @optional
+    def processProjectorCommand(self, command: ProjectorCommand):
         pass
