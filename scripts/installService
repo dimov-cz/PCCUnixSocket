@@ -6,12 +6,15 @@ cd $SCRIPT_DIR
 
 IN="eLGate.service"
 OUT="/etc/systemd/system/$IN"
-EXEC=$(realpath "$SCRIPT_DIR/../eLGate.py")
-USER="root" #change
+VENV_PYTHON=$(realpath "$SCRIPT_DIR/..")/venv/bin/python
+ELGATE_EP=$(realpath "$SCRIPT_DIR/../eLGate.py")
+USER="root" #change me!
+
+EXEC="$VENV_PYTHON $ELGATE_EP"
 
 echo $EXEC
 
-cat $IN | sed "s|<<<PYSCRIPT_PATH>>>|$EXEC|" | sed "s/<<<USER>>>/$USER/" > $OUT
+cat $IN | sed "s|<<<EXEC_PATH>>>|$EXEC|" | sed "s/<<<USER>>>/$USER/" > $OUT
 
 systemctl daemon-reload
 systemctl start $IN
