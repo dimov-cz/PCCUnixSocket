@@ -100,6 +100,7 @@ class PanasonicComfortCloudDeviceController(ADeviceController):
                     ClimateStateMessage(
                         deviceId= deviceInfo.deviceId,
                         available= data.available,
+                        availableSettings= data.available,
                         mode= PccConstToElGateMapper.operationMode(data.power, data.mode),
                         presetId= data.presetId,
                         currentTemperatureIn= data.temperatureInside, 

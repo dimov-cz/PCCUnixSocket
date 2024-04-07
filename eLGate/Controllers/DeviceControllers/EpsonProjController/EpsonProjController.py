@@ -56,6 +56,8 @@ class EpsonProjController(ADeviceController):
                     self.sendMessage(
                         ProjectorStateMessage(
                             deviceId= self.projectorID,
+                            available= True,
+                            availableSettings= True if int(powerIsON) else False,
                             power= True if int(powerIsON) else False,
                             ready= True if int(readyState) else False,
                         )

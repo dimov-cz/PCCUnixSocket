@@ -44,7 +44,11 @@ class AHassComponent(ALoggable, ABC):
     def getConfig(self) -> dict:
         pass
 
+    def _buildStateSubtopic(self, topicName: str) -> str:
+        return self.getStateTopic() + "/" + topicName
     
+    def _buildStateSubtopicAndData(self, topicName: str, data) -> list:
+        return [ self._buildStateSubtopic(topicName), data ]
     
     
     def getDiscoveryTopic(self) -> str:
@@ -62,6 +66,9 @@ class AHassComponent(ALoggable, ABC):
         return "set"
     def getCommandTopic(self) -> str:
         return self.getDataTopic() + "/" + self.getCommandTopicName()
+    
+    def getUpdateAvailabilityTD(self, state: bool) -> list:
+        return self._buildStateSubtopicAndData("avail", "online" if state else "offline")
     
     @abstractmethod
     def processCommandMessage(self, topicName: str, data) -> ACommand:

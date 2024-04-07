@@ -11,9 +11,10 @@ class MQTTClientManageController(AManageController):
     activeComponents: Dict[str, Dict[str, AHassComponent]]
     
     
-    def __init__(self, clientId: str, hostname: str = "localhost", port: int = 1883, username: str = "", password: str = ""):
+    def __init__(self, clientId: str, hostname: str = "localhost", port: int = 1883, username: str = "", password: str = "", development: bool = False):
         super().__init__()
         self._gateDevice = None
+        self.development = development
         self.activeComponents = {}
         
         self.mainDataTopic = "homeassistant"
@@ -37,7 +38,8 @@ class MQTTClientManageController(AManageController):
             port    =settings.getInt(   'port', 1883),
             clientId=settings.getString('id',   "eLGate"),
             username=settings.getString('login', ''),
-            password=settings.getString('password', '')
+            password=settings.getString('password', ''),
+            development=settings.getBool('development', False)
         )
                 
     def stop(self):
@@ -88,12 +90,14 @@ class MQTTClientManageController(AManageController):
         self.mqttConnector.getClient().publish(
                                     component.getDiscoveryTopic(), 
                                     json.dumps(config), 
-                                    retain=False  #TODO retain for production
+                                    retain= not self.development  #retain only in production
         )
         
-    def _sendData(self, topicAndData: list):
+    def _sendData(self, topicAndData: list, retain: bool = False):
         mqttClient = self.mqttConnector.getClient()
-        mqttClient.publish(topicAndData[0], topicAndData[1], retain=False)
+        if self.development:
+            retain = False
+        mqttClient.publish(topicAndData[0], topicAndData[1], retain= retain)
         
     def processNewDevice(self, message: NewDeviceMessage):
         self._logger.info(f"Processing new device: {message}")
@@ -175,16 +179,22 @@ class MQTTClientManageController(AManageController):
             self._logger.error(f"Device not found: {message.deviceId}")
             return
         powerComp = self.activeComponents[message.deviceId]["main"]
+        sourceComp = self.activeComponents[message.deviceId]["src"]
+        colorModeComp = self.activeComponents[message.deviceId]["colormode"]
         
         if message.power is not None:
+            if message.available is not None: 
+                self._sendData(powerComp.getUpdateAvailabilityTD(message.available))
             self._sendData(powerComp.getSetStateTD(message.power))
 
+        if message.availableSettings is not None: 
+            self._sendData(sourceComp.getUpdateAvailabilityTD(message.availableSettings))
+            self._sendData(colorModeComp.getUpdateAvailabilityTD(message.availableSettings))
+
         if message.source is not None:
-            sourceComp = self.activeComponents[message.deviceId]["src"]
             self._sendData(sourceComp.getSetStateTD(message.source))
         
         if message.colorMode is not None:
-            colorModeComp = self.activeComponents[message.deviceId]["colormode"]
             self._sendData(colorModeComp.getSetStateTD(message.colorMode))
 
         

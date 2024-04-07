@@ -77,27 +77,21 @@ class HvacHassComponent(AHassComponent):
         }
         return config
     
-    def _getTopicAndData(self, topicName: str, data) -> list:
-        return [ self.getStateTopic() + "/" + topicName, data ]
-    
     def getUpdateModeTD(self, mode: HvacOperationModeEnum) -> list:
         eLMode = HvacHassModeEnum.createFromELGateMode(mode)
-        return self._getTopicAndData("mode",   json.dumps( { "modeId": eLMode.value, "modeName": eLMode.name }) )
+        return self._buildStateSubtopicAndData("mode",   json.dumps( { "modeId": eLMode.value, "modeName": eLMode.name }) )
     
     def getUpdatePresetTD(self, preset: str) -> list:
-        return self._getTopicAndData("preset", json.dumps( { "presetId": preset } ))
-    
-    def getUpdateAvailabilityTD(self, state: bool) -> list:
-        return self._getTopicAndData("avail", "online" if state else "offline")
+        return self._buildStateSubtopicAndData("preset", json.dumps( { "presetId": preset } ))
     
     def getUpdateTargetTemperatureTD(self, temp: Optional[float]) -> list:
-        return self._getTopicAndData("temp", temp)
+        return self._buildStateSubtopicAndData("temp", temp)
     
     def getUpdateInsideTemperatureTD(self, temp: Optional[float]) -> list:
-        return self._getTopicAndData("curr_temp_in", temp)
+        return self._buildStateSubtopicAndData("curr_temp_in", temp)
     
     def getUpdateOutsideTemperatureTD(self, temp: Optional[float]) -> list:
-        return self._getTopicAndData("curr_temp_out", temp)
+        return self._buildStateSubtopicAndData("curr_temp_out", temp)
     
     def processCommandMessage(self, topicName: str, data) -> ACommand:
         self._logger.debug(f"processCommandMessage: {data} in {topicName}")

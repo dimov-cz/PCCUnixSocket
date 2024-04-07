@@ -4,6 +4,9 @@ class ProjectorStateMessage(AMessage):
     
     def __init__(self, 
                  deviceId: str,
+                 available: Optional[bool] = None,
+                 availableSettings: Optional[bool] = None,
+
                  power: Optional[bool] = None,
                  ready: Optional[bool] = None,
 
@@ -13,10 +16,11 @@ class ProjectorStateMessage(AMessage):
 
                  mute: Optional[bool] = None,
                  volume: Optional[int] = None,
-                 
-                 available: Optional[bool] = None,
-                 ) -> None:
+    ) -> None:
         self.deviceId = deviceId
+        self.available = available
+        self.availableSettings = availableSettings
+
         self.power = power
         self.ready = ready
 
