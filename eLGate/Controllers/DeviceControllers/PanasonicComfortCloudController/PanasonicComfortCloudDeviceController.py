@@ -17,12 +17,11 @@ class PanasonicComfortCloudDeviceController(ADeviceController):
     lastUpdateStart: float
     
     def __init__(self, settings: Settings) -> None:
-        super().__init__()
-
         eLGatePresets = settings.getDict('presets')
         self.pcc = PccCommander(
             presets = ELGateToPccConstMapper.presets(eLGatePresets),
         )
+        super().__init__()
         self.pcc.setLogLevel(self._logger.getEffectiveLevel())
         
         tokenPath = settings.getString('tokenPath', '~/pcc-')

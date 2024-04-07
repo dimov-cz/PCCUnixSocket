@@ -66,6 +66,14 @@ class Settings:
             raise Exception(f"Value for {key} is not an integer! It's a {type(value)}")
         return value
     
+    def getBool(self, key, default = False) -> bool:
+        value = self.get(key, None)
+        if value is None:
+            return default
+        if (not isinstance(value, bool)):
+            raise Exception(f"Value for {key} is not a boolean! It's a {type(value)}")
+        return value
+
     def getList(self, key, default = []) -> list:
         value = self.get(key, default)
         if (not isinstance(value, list)):
