@@ -8,7 +8,7 @@ class SwitchHassComponent(AHassComponent):
         return "switch"
 
     def getConfig(self) -> dict:
-        baseTopic = self.getDeviceTopic()
+        baseTopic = self.getDataTopic()
         stateTopic = '~/' + self.getStateTopicName()
         commandTopic = '~/' + self.getCommandTopicName()
 

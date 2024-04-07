@@ -5,9 +5,6 @@ import json
 from eLGate.__space__ import Settings
 from .__space__ import *
 
-from .hass_mqtt_discovery.hass_mqtt_device import Climate as HassClimate
-from .hass_mqtt_discovery.hass_mqtt_device import Device as HassDevice2
-
 class MQTTClientManageController(AManageController):
     mqttConnector: MQTTClientConnector
     _gateDevice: Optional[HassDevice]
@@ -19,6 +16,9 @@ class MQTTClientManageController(AManageController):
         self._gateDevice = None
         self.activeComponents = {}
         
+        self.mainDataTopic = "homeassistant"
+        self.mainDiscoveryTopic = "homeassistant"
+
         self.mqttConnector = MQTTClientConnector()
         self.mqttConnector.setUp(
                             clientId= clientId, 
@@ -27,7 +27,7 @@ class MQTTClientManageController(AManageController):
                             username= username,
                             password= password,
                             messageCallback= self._on_message,
-                            subscribeTopics= [ "homeassistant/#"]
+                            subscribeTopics= [ self.mainDataTopic + "/#"]
         )
         self.mqttConnector.start()
 
@@ -75,13 +75,21 @@ class MQTTClientManageController(AManageController):
     
     def meAsDevice(self) -> HassDevice:
         if self._gateDevice is None:
-            self._gateDevice = HassDevice(["eLGate"], "eLGate", "v0.1", "0", "eL")
+            self._gateDevice = HassDevice(
+                "eLGate", "eLGate" , 
+                "eLGate", "v0.2", "0", "eL", 
+                self.mainDataTopic, self.mainDiscoveryTopic
+            )
         return self._gateDevice
-
+    
     def _sendConfig(self, component: AHassComponent):
         self._logger.info(f"Sending config for {component}")
         config = component.getConfig()
-        self.mqttConnector.getClient().publish(component.getDiscoveryTopic(), json.dumps(config), retain=False)
+        self.mqttConnector.getClient().publish(
+                                    component.getDiscoveryTopic(), 
+                                    json.dumps(config), 
+                                    retain=False  #TODO retain for production
+        )
         
     def _sendData(self, topicAndData: list):
         mqttClient = self.mqttConnector.getClient()
@@ -91,11 +99,21 @@ class MQTTClientManageController(AManageController):
         self._logger.info(f"Processing new device: {message}")
         deviceId = message.device.id
         if deviceId not in self.activeComponents.values():
+            if isinstance(message.device, ADevice):
+                d = message.device;
+                hassDevice = HassDevice(
+                    d.id, d.getShortId(),
+                    d.name, d.version, d.model, d.manufacturer,
+                    self.mainDataTopic, self.mainDiscoveryTopic
+                )
+            else:
+                hassDevice = self.meAsDevice()
+
             if isinstance(message.device, HvacDevice):
-                self._logger.info(f"Processing new HVAC: {message.device}")                
+                self._logger.info(f"Processing new HVAC: {message.device}")
                 newComponent = HvacHassComponent(
                                     device=message.device, 
-                                    parentHassDevice=self.meAsDevice()
+                                    parentHassDevice=hassDevice
                 )
                 self.activeComponents[deviceId] = {}
                 self.activeComponents[deviceId]["main"] = newComponent
@@ -105,21 +123,16 @@ class MQTTClientManageController(AManageController):
             elif isinstance(message.device, ProjectorDevice):
                 self._logger.info(f"Processing new projector: {message.device}")
                 self.activeComponents[deviceId] = {}
-                newComponent = SwitchHassComponent(
-                                    device=message.device,
-                                    parentHassDevice=self.meAsDevice(),
-                                    componentUniqueId= message.device.getShortId() + "_PWR",
-                                    componentName= message.device.name + " Power"
-                )
+                newComponent = SwitchHassComponent( message.device, hassDevice, "PWR", "Power")
                 self.activeComponents[deviceId]["main"] = newComponent
                 self._sendConfig(newComponent)
                 self.mqttConnector.getClient().subscribe(newComponent.getCommandTopic()+'/#')
 
                 newComponent = SelectHassComponent(
                                     device=message.device,
-                                    parentHassDevice=self.meAsDevice(),
-                                    componentUniqueId=message.device.getShortId() + "_SRC",
-                                    componentName=message.device.name + " Source",
+                                    parentHassDevice=hassDevice,
+                                    componentUniqueId= "SRC",
+                                    componentName= "Source",
                                     selectOptions=message.device.sourcesList
                 )
                 self.activeComponents[deviceId]["src"] = newComponent
@@ -128,9 +141,9 @@ class MQTTClientManageController(AManageController):
 
                 newComponent = SelectHassComponent(
                                     device=message.device,
-                                    parentHassDevice=self.meAsDevice(),
-                                    componentUniqueId=message.device.getShortId() + "_MODE",
-                                    componentName=message.device.name + " Mode",
+                                    parentHassDevice=hassDevice,
+                                    componentUniqueId= "MODE",
+                                    componentName= "Mode",
                                     selectOptions=message.device.colorModesList
                 )
                 self.activeComponents[deviceId]["colormode"] = newComponent

@@ -20,6 +20,7 @@ class EpsonProjController(ADeviceController):
         )
 
         self.projectorID = settings.getString('ID', 'EpsonProj_01')
+        self.projectorName = settings.getString('name', 'Projector')
         self.sourcesList = settings.getList('sources', [ "HDMI1", "HDMI2", "LAN", "WFD" ])
         self.colorModesList = settings.getList('color_modes', [ "CINEMA", "BRIGHT" ])
 
@@ -27,7 +28,7 @@ class EpsonProjController(ADeviceController):
             NewDeviceMessage(
                 ProjectorDevice(
                     self.projectorID,
-                    self.projectorID + " (" + self.projector.host + ")",
+                    self.projectorName,
                     "",
                     "Epson",
                     self.sourcesList,

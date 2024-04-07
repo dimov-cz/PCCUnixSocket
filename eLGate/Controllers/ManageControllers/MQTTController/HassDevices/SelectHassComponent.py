@@ -7,21 +7,16 @@ class SelectHassComponent(AHassComponent):
         self, 
         device: ADevice,
         parentHassDevice: HassDevice,
-        
-        dataMainTopic: str = "homeassistant",
-        discoveryMainTopic: str = "homeassistant",
-        
         componentUniqueId: Optional[str] = None,
         componentName: Optional[str] = None,
+
         selectOptions: List[str] = []
     ) -> None:
         super().__init__(
-            device=device,
-            parentHassDevice=parentHassDevice,
-            dataMainTopic=dataMainTopic,
-            discoveryMainTopic=discoveryMainTopic,
-            componentUniqueId=componentUniqueId,
-            componentName=componentName,
+            device=             device,
+            parentHassDevice=   parentHassDevice,
+            componentUniqueId=  componentUniqueId,
+            componentName=      componentName,
         )
         self.selectOptions = selectOptions
 
@@ -30,7 +25,7 @@ class SelectHassComponent(AHassComponent):
         return "select"
 
     def getConfig(self) -> dict:
-        baseTopic = self.getDeviceTopic()
+        baseTopic = self.getDataTopic()
         stateTopic = '~/' + self.getStateTopicName()
         commandTopic = '~/' + self.getCommandTopicName()
 

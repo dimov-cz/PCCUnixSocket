@@ -9,17 +9,7 @@ class HvacHassComponent(AHassComponent):
     @property
     def componentTypeName(self) -> str:
         return "climate"
-    
-    def __init__(
-        self, 
-        device: HvacDevice,
-        parentHassDevice: HassDevice,
-        dataMainTopic: str = "homeassistant",
-        discoveryMainTopic: str = "homeassistant",
-        deviceId: Optional[str] = None
-    ) -> None:
-        super().__init__(device, parentHassDevice, dataMainTopic, discoveryMainTopic)    
-        
+            
     #A list of supported modes. Needs to be a subset of the default values.
     # Default: [“auto”, “off”, “cool”, “heat”, “dry”, “fan_only”]
     def defaultModes(self) -> list:
@@ -35,7 +25,7 @@ class HvacHassComponent(AHassComponent):
         return out
         
     def getConfig(self) -> dict:
-        baseTopic = self.getDeviceTopic()
+        baseTopic = self.getDataTopic()
         stateTopic = '~/' + self.getStateTopicName()
         commandTopic = '~/' + self.getCommandTopicName()
         presetsIds = self.device.presetsIds.copy()

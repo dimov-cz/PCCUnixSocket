@@ -6,17 +6,21 @@ class ADevice(ALoggable, ABC):
     logger: logging.Logger
     
     id: str
-    _shortId: Optional[str] = None
+    _shortId: Optional[str]
     name: str
     model: str
     manufacturer: str
+    version: str
     
-    def __init__(self, id: str, name: str, model: str = "", manufacturer: str = "") -> None:
+    def __init__(self, id: str, name: str, model: str = "", manufacturer: str = "", version:str = "") -> None:
         ALoggable.__init__(self)
         self.id = id
         self.name = name
         self.model = model
         self.manufacturer = manufacturer
+        self.version = version
+        
+        self._shortId = None
         
     #for usage by system wich don't support long device ids,
     #we need ensure is 16 chars max
